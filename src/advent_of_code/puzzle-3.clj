@@ -1,6 +1,7 @@
 (ns advent-of-code.puzzle-3
   (:gen-class)
-  (require [clojure.string :as str]))
+  (require [clojure.string :as str]
+           [clojure.set :as sets]))
 
 (defn tokenise
   [line]
@@ -25,8 +26,27 @@
 
 (defn generate-coordinates
   [claim]
-  (let [first ()]))
+  (let [xs (range (:x claim) (+ (:width claim) (:x claim)))
+        ys (range (:y claim) (+ (:height claim) (:y claim)))]
+    {:id (:id claim)
+     :coordinates (set (for [x xs
+                             y ys]
+                         (list x y)))}))
+
+(defn check-map
+  [{:keys [overlapping claim-map]} claim]
+  (let [new-overlapping-claims (sets/intersection claim-map claim)]
+    {:overlapping (sets/union overlapping new-overlapping-claims)
+     :claim-map (sets/union claim-map claim)}))
 
 (defn part-1
   [inputs]
-  )
+  (let [coordinates (map :coordinates (map generate-coordinates inputs))]
+    (count (:overlapping (reduce check-map {:claim-map #{} :overlapping #{}} coordinates)))))
+
+(defn part-2
+  [inputs]
+  (let [coordinates (map generate-coordinates inputs)
+        overlapping (->> (reduce check-map {:claim-map #{} :overlapping #{}} (map :coordinates coordinates))
+                         (:overlapping))]
+    (:id (first (filter #(empty? (sets/intersection overlapping (:coordinates %1))) coordinates)))))
